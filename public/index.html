@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlantScan | Smart Plant Analysis</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css"
+    />
+
+    <style>
+      :root {
+        --bg: #eff7f2;
+        --text: #1b2e24;
+        --card: #ffffff;
+        --accent: #2ecc71;
+        --border: #dcefe6;
+      }
+
+      body.dark {
+        --bg: #0b1412;
+        --text: #d0ece0;
+        --card: #111c18;
+        --accent: #27ae60;
+        --border: #1f352d;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Poppins", sans-serif;
+        transition: 0.3s ease-in-out;
+      }
+
+      .splash {
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeOut 1.6s forwards 1.2s;
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+
+      .splash-logo {
+        font-size: 70px;
+        color: var(--accent);
+        animation: bounce 1.2s infinite alternate;
+      }
+
+      @keyframes bounce {
+        to {
+          transform: translateY(-15px);
+        }
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 50px auto;
+        background: var(--card);
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.4rem;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        cursor: pointer;
+        background: var(--card);
+        padding: 10px 14px;
+        border-radius: 30px;
+        border: 2px solid var(--border);
+        font-size: 20px;
+        transition: 0.3s;
+        z-index: 10000;
+      }
+
+      .upload-area {
+        background: var(--bg);
+        border: 2px dashed var(--accent);
+        border-radius: 14px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.25s;
+      }
+
+      .upload-area:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      #cropContainer {
+        display: none;
+        margin-top: 20px;
+      }
+
+      #cropContainer img {
+        max-width: 100%;
+      }
+
+      #imagePreview {
+        display: none;
+        width: 100%;
+        border-radius: 12px;
+        margin-top: 20px;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        margin-top: 20px;
+        border: none;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        transition: 0.3s;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      #downloadButton {
+        background: #e74c3c;
+        display: none;
+      }
+
+      #result {
+        display: none;
+        margin-top: 25px;
+        padding: 20px;
+        background: var(--bg);
+        border-left: 5px solid var(--accent);
+        border-radius: 10px;
+      }
+
+      .features {
+        margin-top: 40px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+
+      .feature {
+        background: var(--bg);
+        padding: 15px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+      }
+
+      .feature i {
+        margin-right: 12px;
+        font-size: 22px;
+        color: var(--accent);
+      }
+
+      @media (max-width: 700px) {
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- SPLASH -->
+    <div class="splash">
+      <i class="fas fa-leaf splash-logo"></i>
+      <p>PlantScan is loading...</p>
+    </div>
+
+    <!-- THEME TOGGLE -->
+    <div class="theme-toggle" id="themeToggle">
+      <i class="fas fa-moon"></i>
+    </div>
+
+    <div class="container">
+      <h1><i class="fas fa-seedling"></i></i> PlantScan</h1>
+      <p class="subtitle">Smart AI-Powered Plant Health Detection</p>
+
+      <!-- UPLOAD AREA -->
+      <div class="upload-area" id="dropArea">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 48px"></i>
+        <p>Click or Drag & Drop to Upload Image</p>
+      </div>
+
+      <input type="file" id="imageInput" accept="image/*" hidden />
+
+      <!-- CROPPER -->
+      <div id="cropContainer">
+        <div style="max-height:400px; overflow:hidden; border-radius:12px;">
+          <img id="cropImage" />
+        </div>
+      </div>
+
+      <button id="cropButton" style="display:none;">
+        Crop & Continue
+      </button>
+
+      <img id="imagePreview" />
+
+      <button id="analyzeButton" style="display:none;">
+        <i class="fas fa-search"></i> Analyze Plant
+      </button>
+
+      <div id="result"></div>
+
+      <button id="downloadButton">Download PDF</button>
+
+      <!-- Features -->
+      <h2 style="margin-top: 40px">Features</h2>
+      <div class="features">
+        <div class="feature"><i class="fas fa-seedling"></i></i>AI Species Detection</div>
+        <div class="feature"><i class="fas fa-heart-pulse"></i>Health & Disease Diagnosis</div>
+        <div class="feature"><i class="fas fa-lightbulb"></i>Care Suggestions</div>
+        <div class="feature"><i class="fas fa-bolt"></i>Instant Results</div>
+      </div>
+    </div>
+
+    <!-- CROP JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+      let analyzeController = null;
+      let cropper = null;
+      let finalImageBase64 = "";
+      let analysisResult = "";
+
+      const themeToggle = document.getElementById("themeToggle");
+      const dropArea = document.getElementById("dropArea");
+      const imageInput = document.getElementById("imageInput");
+      const cropContainer = document.getElementById("cropContainer");
+      const cropImage = document.getElementById("cropImage");
+      const cropButton = document.getElementById("cropButton");
+      const imagePreview = document.getElementById("imagePreview");
+      const analyzeButton = document.getElementById("analyzeButton");
+      const resultDiv = document.getElementById("result");
+      const downloadButton = document.getElementById("downloadButton");
+
+      /* THEME */
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        themeToggle.innerHTML = document.body.classList.contains("dark")
+          ? '<i class="fas fa-sun"></i>'
+          : '<i class="fas fa-moon"></i>';
+      });
+
+      /* FILE HANDLING */
+      dropArea.addEventListener("click", () => imageInput.click());
+      dropArea.addEventListener("dragover", e => (e.preventDefault(), dropArea.style.opacity = "0.8"));
+      dropArea.addEventListener("dragleave", () => dropArea.style.opacity = "1");
+      dropArea.addEventListener("drop", e => {
+        e.preventDefault();
+        handleFile(e.dataTransfer.files[0]);
+      });
+
+      imageInput.addEventListener("change", e => handleFile(e.target.files[0]));
+
+      function handleFile(file) {
+        if (!file) return;
+
+        
+        resultDiv.style.display = "none";
+        resultDiv.innerHTML = "";
+        downloadButton.style.display = "none";
+        analyzeButton.style.display = "none";
+        imagePreview.style.display = "none";
+
+        if (cropper) cropper.destroy();
+        cropper = null;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          cropImage.src = reader.result;
+          cropContainer.style.display = "block";
+          cropButton.style.display = "block";
+
+          setTimeout(() => {
+            cropper = new Cropper(cropImage, {
+              viewMode: 1,
+              dragMode: "move",
+              autoCropArea: 1,
+              responsive: true,
+              movable: true,
+              zoomable: true,
+              scalable: true
+            });
+          }, 150);
+        };
+
+        reader.readAsDataURL(file);
+      }
+
+      /* CROP */
+      cropButton.addEventListener("click", () => {
+        if (!cropper) return alert("Cropper not ready!");
+
+        const canvas = cropper.getCroppedCanvas({
+          maxWidth: 1200,
+          maxHeight: 1200,
+          fillColor: "#fff",
+        });
+
+        finalImageBase64 = canvas.toDataURL("image/png");
+
+        imagePreview.src = finalImageBase64;
+        imagePreview.style.display = "block";
+
+        cropContainer.style.display = "none";
+        cropButton.style.display = "none";
+        analyzeButton.style.display = "block";
+
+        cropper.destroy();
+        cropper = null;
+      });
+
+      /* ANALYZE */
+      analyzeButton.addEventListener("click", async () => {
+        if (!finalImageBase64)
+          return alert("Please upload and crop an image first.");
+
+        if (analyzeController) analyzeController.abort();
+        analyzeController = new AbortController();
+
+        resultDiv.style.display = "block";
+        resultDiv.innerHTML = "<p>Analyzing... Please wait.</p>";
+
+        try {
+          const response = await fetch("/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: finalImageBase64 }),
+            signal: analyzeController.signal,
+          });
+
+          const data = await response.json();
+          if (data.error) throw new Error(data.error);
+
+          analysisResult = data.result;
+
+          resultDiv.innerHTML =
+            "<h3>Analysis Result</h3><div>" +
+            analysisResult.replace(/\n/g, "<br>") +
+            "</div>";
+
+          downloadButton.style.display = "block";
+        } catch (err) {
+          if (err.name === "AbortError") return;
+          resultDiv.innerHTML = "<p>Error: " + err.message + "</p>";
+        }
+      });
+
+      /* DOWNLOAD PDF */
+      downloadButton.addEventListener("click", async () => {
+        const response = await fetch("/download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            result: analysisResult,
+            image: finalImageBase64,
+          }),
+        });
+
+        const blob = await response.blob();
+        const link = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = link;
+        a.download = "PlantScan_Report.pdf";
+        a.click();
+      });
+    </script>
+  </body>
+</html>
